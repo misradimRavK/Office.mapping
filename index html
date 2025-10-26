@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Office Mapping</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+  h2 { text-align: center; }
+  input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+  button { cursor: pointer; border: none; border-radius: 5px; }
+  button.add-btn { background-color: #4CAF50; color: white; }
+  button.add-btn:hover { background-color: #45a049; }
+  button.delete-btn { background: #f44336; color: white; padding: 3px 7px; border-radius: 3px; cursor: pointer; }
+  button.delete-btn:hover { background-color: #d32f2f; }
+  .result { margin-top: 15px; font-weight: bold; }
+  ul { padding-right: 20px; list-style-type: none; }
+  li { cursor: pointer; padding: 5px; background: #e0e0e0; margin: 2px 0; border-radius: 3px; }
+  li:hover { background: #d0d0d0; }
+  .bureau-list { margin-top: 20px; }
+  .bureau-item { display: flex; justify-content: space-between; align-items: center; padding: 5px; background: #fff; margin: 2px 0; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);}
+</style>
+</head>
+<body>
+
+<h2>מיפוי משרדים</h2>
+
+<input type="text" id="bureauInput" placeholder="הקלד שם משרד...">
+<div id="autocompleteList"></div>
+<button class="add-btn" onclick="searchOffice()">Find Floor</button>
+<div class="result" id="result"></div>
+
+<h3>Office Management</h3>
+<input type="text" id="newBureauName" placeholder="New Office Name">
+<input type="number" id="newBureauFloor" placeholder="Floor">
+<button class="add-btn" onclick="addOffice()">Add Office</button>
+
+<div class="bureau-list" id="bureauList"></div>
+
+<script>
+  // Load offices from localStorage or default list
+  let bureaux = JSON.parse(localStorage.getItem("offices")) || {
+    "שיווק": 2,
+    "כספים": 3,
+    "משאבי אנוש": 1,
+    "IT": 4,
+    "הנהלה": 5
+  };
+
+  const input = document.getElementById("bureauInput");
+  const autocompleteList = document.getElementById("autocompleteList");
+  const bureauListDiv = document.getElementById("bureauList");
+
+  // Save offices to localStorage
+  function saveOffices() {
+    localStorage.setItem("offices", JSON.stringify(bureaux));
+  }
+
+  // Display the list of offices
+  function displayOffices() {
+    bureauListDiv.innerHTML = '';
+    for (let name in bureaux) {
+      const div = document.createElement("div");
+      div.className = "bureau-item";
+      div.innerHTML = `${name} - קומה ${bureaux[name]} <button class="delete-btn" onclick="deleteOffice('${name}')">Delete</button>`;
+      bureauListDiv.appendChild(div);
+    }
+  }
+
+  // Delete an office
+  function deleteOffice(name) {
+    delete bureaux[name];
+    saveOffices();
+    displayOffices();
+  }
+
+  // Autocomplete search
+  input.addEventListener("input", function() {
+    const val = this.value;
+    autocompleteList.innerHTML = '';
+    if (!val) return;
+    const matches = Object.keys(bureaux).filter(name => name.includes(val));
+    if (matches.length > 0) {
+      const ul = document.createElement("ul");
+      matches.forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        li.onclick = () => {
+          input.value = name;
+          autocompleteList.innerHTML = '';
+        };
+        ul.appendChild(li);
+      });
+      autocompleteList.appendChild(ul);
+    }
+  });
+
+  // Search office floor
+  function searchOffice() {
+    const nom = input.value.trim();
+    const resultDiv = document.getElementById("result");
+    if (bureaux[nom] !== undefined) {
+      resultDiv.textContent = `המשרד "${nom}" נמצא בקומה ${bureaux[nom]}.`;
+    } else {
+      resultDiv.textContent = `לא נמצא משרד בשם "${nom}".`;
+    }
+  }
+
+  // Add new office
+  function addOffice() {
+    const name = document.getElementById("newBureauName").value.trim();
+    const floor = parseInt(document.getElementById("newBureauFloor").value);
+    if (!name || isNaN(floor)) {
+      alert("Please enter a valid office name and floor.");
+      return;
+    }
+    bureaux[name] = floor;
+    saveOffices();
+    displayOffices();
+    document.getElementById("newBureauName").value = '';
+    document.getElementById("newBureauFloor").value = '';
+  }
+
+  displayOffices();
+</script>
+
+</body>
+</html>
